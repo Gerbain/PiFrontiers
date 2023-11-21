@@ -63,6 +63,9 @@ def move_gatherers():
         for gatherer in tribe.gatherers:
             gx, gy = gatherer['position']
 
+            # Initialize dx and dy
+            dx, dy = 0, 0
+
             if gatherer['carrying_resource']:
                 # Return to base
                 dx, dy = tribe.base_position[0] - gx, tribe.base_position[1] - gy
@@ -84,8 +87,10 @@ def move_gatherers():
             if distance > 0:
                 dx, dy = dx / distance * gatherer_speed, dy / distance * gatherer_speed
 
-            # Update gatherer position
-            gatherer['position'] = (gx + dx, gy + dy)
+            # Update gatherer position with boundary checks
+            new_gx = max(0, min(width - item_size, gx + dx))
+            new_gy = max(0, min(height - item_size, gy + dy))
+            gatherer['position'] = (new_gx, new_gy)
 
             # Check if gatherer reached the target
             if target_reached and distance < item_size:
