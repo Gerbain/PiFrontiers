@@ -41,15 +41,20 @@ class Tribe:
         self.base_image = base_image
         self.gatherer_image = gatherer_image
         self.base_position = base_position
-        self.gatherers = [{'position': base_position, 'carrying_resource': False}]  # Initial gatherer at the base
+        self.gatherers = [{'position': base_position, 'carrying_resource': False}]
+        self.resources_collected = 0  # Counter for collected resources
 
     def add_gatherer(self, position):
-        # Logic to add a new gatherer
         self.gatherers.append({'position': position, 'carrying_resource': False})
 
 # Initialize tribes with their respective images
-# Ensure each tribe starts with exactly one gatherer
 tribes = [Tribe(tribe_imgs[i], gatherer_imgs[i], (50 + i * 300, 50)) for i in range(3)]
+
+# Font setup for displaying resources needed
+pygame.font.init()
+font_size = 18
+game_font = pygame.font.SysFont('Arial', font_size)
+resources_for_new_gatherer = 5  # Number of resources needed to add a new gatherer
 
 def move_gatherers():
     search_radius = 100  # Radius within which gatherers can detect resources
@@ -87,7 +92,12 @@ def move_gatherers():
                 if gatherer['carrying_resource']:
                     # Deliver resource to base
                     gatherer['carrying_resource'] = False
-                    tribe.add_gatherer(tribe.base_position)  # Add a new gatherer at the base
+                    tribe.resources_collected += 1  # Increment resources collected
+
+                    # Check if threshold is reached to add a new gatherer
+                    if tribe.resources_collected % resources_for_new_gatherer == 0:
+                        tribe.add_gatherer(tribe.base_position)
+
                 else:
                     # Pick up resource
                     gatherer['carrying_resource'] = True
@@ -112,7 +122,7 @@ while True:
     for resource in resources:
         screen.blit(resource_img, resource['position'])
 
-    # Draw tribes and gatherers
+    # Draw tribes, gatherers, and display information
     for tribe in tribes:
         screen.blit(tribe.base_image, tribe.base_position)
         for gatherer in tribe.gatherers:
@@ -120,6 +130,15 @@ while True:
             if gatherer['carrying_resource']:
                 # Draw resource image with 10px offset
                 screen.blit(resource_img, (gatherer['position'][0] + 10, gatherer['position'][1] + 10))
+
+        # Calculate and display remaining resources needed for a new gatherer (left of the base)
+        remaining_resources = resources_for_new_gatherer - (tribe.resources_collected % resources_for_new_gatherer)
+        resources_text = game_font.render(str(remaining_resources), True, (255, 255, 255))  # White color
+        screen.blit(resources_text, (tribe.base_position[0] - resources_text.get_width() - 5, tribe.base_position[1]))
+
+        # Display the number of gatherers (right of the base)
+        gatherers_text = game_font.render(str(len(tribe.gatherers)), True, (255, 255, 255))  # White color
+        screen.blit(gatherers_text, (tribe.base_position[0] + item_size + 5, tribe.base_position[1]))
 
     # Update the display
     pygame.display.update()
